@@ -1,4 +1,6 @@
-# 1 Projects
+# 1Projects
+
+![1Projects Logo/Executable Icon](assets/images/icon.png "1Projects Logo/Executable Icon")
 
 Map and sync your projects respectively.
 

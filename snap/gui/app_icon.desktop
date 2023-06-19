@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=1Projects
+Comment=Map and sync your 1 password projects respectively.
+Exec=app_icon
+Icon=app_icon.png
+Terminal=false
+Type=Application
+Categories=Entertainment;

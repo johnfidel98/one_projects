@@ -12,6 +12,8 @@ dependencies:
   pluto_menu_bar: ^3.0.1
   get: ^4.6.5
   process_run: ^0.13.0
+  flutter_svg: ^2.0.7
+  icons_launcher: ^2.1.1
 
 dev_dependencies:
   flutter_test:
@@ -20,3 +22,18 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/images/
+    - assets/lottie/
+
+
+icons_launcher:
+  image_path: "assets/images/icon.png"
+  platforms:
+    linux:
+      enable: true
+    windows:
+      enable: true
+    macos:
+      enable: true
