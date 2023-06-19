@@ -1,0 +1,22 @@
+name: one_projects
+description: Map and sync your 1 password projects respectively.
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: '>=3.0.2 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  pluto_menu_bar: ^3.0.1
+  get: ^4.6.5
+  process_run: ^0.13.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^2.0.0
+
+flutter:
+  uses-material-design: true
