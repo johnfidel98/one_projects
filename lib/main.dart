@@ -1,15 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:one_projects/controllers.dart';
 import 'package:one_projects/routes/auth.dart';
 import 'package:one_projects/routes/about.dart';
 import 'package:one_projects/routes/project.dart';
 import 'package:one_projects/routes/projects.dart';
 
-void main() {
-  // check if previous session exists
+Future main() async {
+  // init session controller
+  final SessionController sc = Get.put(SessionController());
 
-  runApp(const MainApp(
-    initRoute: '/projects',
+  // init session
+  await sc.init();
+
+  // check if previous session exists
+  String initRoute = '/auth';
+  await sc.checkSession().then((bool loggedIn) {
+    if (loggedIn) {
+      initRoute = '/projects';
+    }
+  });
+
+  // start app
+  runApp(MainApp(
+    initRoute: initRoute,
   ));
 }
 
