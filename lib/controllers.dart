@@ -5,7 +5,8 @@ import 'package:get/get.dart';
 
 class SessionController extends GetxController {
   RxMap oneSession = RxMap({'email': '', 'id': ''});
-  RxList projects = RxList([]);
+  RxList<Map> projects = RxList([]);
+  RxList<String> processedProjectIds = RxList([]);
   RxMap project = RxMap({});
 
   RxList procedures = RxList([]);
@@ -73,4 +74,47 @@ class SessionController extends GetxController {
   Future<Map> signIn() async =>
       // signin: Sign in to a 1password account
       await runSession('op signin');
+
+  Future listProjects() async {
+    // List items
+    Map raw = await runSession('op item list --categories "Secure Note"');
+
+    if (raw['e'] == 0) {
+      Map fields = {};
+
+      bool readyTitles = false;
+      // process projects map
+      for (String p in raw['o'].toString().trim().split('\n')) {
+        int ix = 0;
+        Map data = {};
+        // split by 2 or more spaces
+        for (String f in p.split(RegExp(r' {2,}'))) {
+          if (!readyTitles) {
+            // process titles
+            fields[ix] = f;
+          } else {
+            // process fields
+            data[fields[ix]] = f;
+          }
+
+          ix += 1;
+        }
+
+        readyTitles = true;
+
+        if (data.containsKey('ID')) {
+          if (!processedProjectIds.contains(data['ID'])) {
+            // add to projects
+            projects.add(data);
+            processedProjectIds.add(data['ID']);
+          } else {
+            // replace existing ones
+            int ix = processedProjectIds.indexOf(data['ID']);
+            projects.removeAt(ix);
+            projects.insert(ix, data);
+          }
+        }
+      }
+    }
+  }
 }

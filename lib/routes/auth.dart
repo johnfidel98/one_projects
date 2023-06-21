@@ -72,7 +72,7 @@ class _AuthPageState extends State<AuthPage> with WidgetsBindingObserver {
         } else {
           // calculate retry
           Random random = Random();
-          int retryTime = random.nextInt(20) + 5;
+          int retryTime = random.nextInt(5) + 1;
 
           // update state
           setState(() {
