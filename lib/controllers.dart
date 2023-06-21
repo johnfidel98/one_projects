@@ -38,8 +38,19 @@ class SessionController extends GetxController {
     process.stdin.writeln(command);
 
     // wait for response
+    int c = 0;
     while (commands.length != outputs.length) {
       await Future.delayed(const Duration(seconds: 1));
+      c += 1;
+
+      // repeat command after 50 sec
+      if (c > 50) {
+        // reset c
+        c = 0;
+
+        // re-send command
+        process.stdin.writeln(command);
+      }
     }
     return outputs.last;
   }

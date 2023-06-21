@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
@@ -45,33 +46,58 @@ class _AuthPageState extends State<AuthPage> with WidgetsBindingObserver {
           navProjects();
         }
 
-        // calculate retry
-        Random random = Random();
-        int retryTime = random.nextInt(20) + 5;
+        if (resp['o'].toString().contains('cannot connect')) {
+          // notify user offline app
+          Get.defaultDialog(
+            title: '1Password App Offline?',
+            content: const Padding(
+              padding: EdgeInsets.all(30.0),
+              child: Text('Are you sure 1Password app is running?'),
+            ),
+            onConfirm: () =>
+                // exit app
+                exit(1),
+            onCancel: () {
+              // update state
+              setState(() {
+                loading = true;
+                state = 'Authenticating ...';
+              });
 
-        // update state
-        setState(() {
-          loading = false;
-          state = 'Authentication Failed! Retrying in $retryTime sec ...';
-        });
+              authenticate();
+            },
+            textCancel: 'Retry',
+            textConfirm: 'Exit App',
+          );
+        } else {
+          // calculate retry
+          Random random = Random();
+          int retryTime = random.nextInt(20) + 5;
 
-        retryTimer = Timer(Duration(seconds: retryTime), () async {
           // update state
           setState(() {
-            loading = true;
-            state = 'Retrying authentication ...';
+            loading = false;
+            state = 'Authentication failed! Retrying in $retryTime sec ...';
           });
 
-          // check if signedin
-          await sc.checkSession().then((bool loggedIn) async {
-            if (loggedIn) {
-              navProjects();
-            } else {
-              // retry authenticate
-              await authenticate();
-            }
+          retryTimer = Timer(Duration(seconds: retryTime), () async {
+            // update state
+            setState(() {
+              loading = true;
+              state = 'Retrying authentication ...';
+            });
+
+            // check if signedin
+            await sc.checkSession().then((bool loggedIn) async {
+              if (loggedIn) {
+                navProjects();
+              } else {
+                // retry authenticate
+                await authenticate();
+              }
+            });
           });
-        });
+        }
       });
 
   @override

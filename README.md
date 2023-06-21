@@ -12,3 +12,8 @@ Map and sync your projects respectively.
 4. Sync project details along with notes.
 5. Do procedure setups including shell init in projects.
 6. Projects mapping with config files (main feature).
+
+
+## Installation
+
+The setup procedure is fairly simple. After installing 1Password and 1Password-cli
