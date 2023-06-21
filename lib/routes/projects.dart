@@ -53,103 +53,108 @@ class _ProjectsPageState extends State<ProjectsPage>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-          color: Colors.grey[100],
-          padding: const EdgeInsets.all(50),
-          child: Column(
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  PopupMenuButton<String>(
-                    onSelected: handleSelected,
-                    itemBuilder: (BuildContext context) {
-                      return const [
-                        PopupMenuItem(
-                          value: 'about',
-                          child: MenuItem(label: 'About', icon: Icons.help),
-                        ),
-                        PopupMenuItem(
-                          value: 'exit',
-                          child: MenuItem(label: 'Exit', icon: Icons.logout),
-                        ),
-                      ];
+      appBar: AppBar(
+        toolbarHeight: 70,
+        backgroundColor: Colors.grey[100],
+        title: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(right: 8.0),
+                  child: Image.asset('assets/images/icon.png', height: 40),
+                ),
+                Text(
+                  '1Projects',
+                  style: defaultAppFont.copyWith(
+                    fontSize: 30,
+                    color: mainColor,
+                  ),
+                ),
+                TextButton(
+                    onPressed: () async {
+                      // refresh projects
+                      setState(() {
+                        refreshing = true;
+                      });
+
+                      await sc.listProjects();
+
+                      setState(() {
+                        refreshing = false;
+                      });
                     },
-                    child: Obx(
-                      () => Container(
-                        color: mainLightColor,
-                        padding: const EdgeInsets.all(10),
-                        child: Row(
+                    child: Icon(
+                      refreshing ? Icons.more_horiz : Icons.sync,
+                      color: Colors.black87,
+                    )),
+              ],
+            ),
+            PopupMenuButton<String>(
+              onSelected: handleSelected,
+              itemBuilder: (BuildContext context) {
+                return const [
+                  PopupMenuItem(
+                    value: 'about',
+                    child: MenuItem(label: 'About', icon: Icons.help),
+                  ),
+                  PopupMenuItem(
+                    value: 'exit',
+                    child: MenuItem(label: 'Exit', icon: Icons.logout),
+                  ),
+                ];
+              },
+              child: Obx(
+                () => Row(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          sc.oneSession['email'],
+                          style: defaultAppFont.copyWith(color: Colors.black),
+                        ),
+                        Text(
+                          sc.oneSession['id'],
+                          style: defaultAppFont.copyWith(
+                              fontSize: 8, height: 2.0, color: Colors.black87),
+                        ),
+                      ],
+                    ),
+                    const Padding(
+                      padding: EdgeInsets.only(left: 8.0),
+                      child: Icon(Icons.unfold_more, color: Colors.black),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      body: SingleChildScrollView(
+        child: Container(
+            color: Colors.grey[100],
+            padding: const EdgeInsets.all(50),
+            child: Column(
+              children: [
+                loading
+                    ? const Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.end,
-                              children: [
-                                Text(sc.oneSession['email']),
-                                Text(
-                                  sc.oneSession['id'],
-                                  style: defaultAppFont.copyWith(
-                                      fontSize: 8, height: 2.5),
-                                ),
-                              ],
-                            ),
-                            const Padding(
-                              padding: EdgeInsets.only(left: 8.0),
-                              child: Icon(Icons.unfold_more),
+                            SizedBox(
+                              height: 300,
+                              width: 300,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 1,
+                              ),
                             ),
                           ],
                         ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              Row(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(right: 8.0),
-                    child: Image.asset('assets/images/icon.png', height: 40),
-                  ),
-                  Text(
-                    '1Projects',
-                    style: defaultAppFont.copyWith(
-                      fontSize: 30,
-                    ),
-                  ),
-                  IconButton(
-                      iconSize: 18,
-                      onPressed: () async {
-                        // refresh projects
-                        setState(() {
-                          refreshing = true;
-                        });
-
-                        await sc.listProjects();
-
-                        setState(() {
-                          refreshing = false;
-                        });
-                      },
-                      icon: Icon(refreshing ? Icons.more_horiz : Icons.sync)),
-                ],
-              ),
-              const Divider(thickness: 1, height: 30),
-              loading
-                  ? const Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 300,
-                            width: 300,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1,
-                            ),
-                          ),
-                        ],
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      child: Padding(
+                      )
+                    : Padding(
                         padding: const EdgeInsets.symmetric(vertical: 8.0),
                         child: Obx(
                           () => sc.projects.isNotEmpty
@@ -170,9 +175,9 @@ class _ProjectsPageState extends State<ProjectsPage>
                               : const EmptyProjects(),
                         ),
                       ),
-                    ),
-            ],
-          )),
+              ],
+            )),
+      ),
     );
   }
 }
@@ -293,7 +298,7 @@ class MenuItem extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(right: 8.0),
-          child: Icon(icon),
+          child: Icon(icon, color: Colors.black87),
         ),
         Text(label),
       ],
