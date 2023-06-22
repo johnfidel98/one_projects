@@ -104,4 +104,16 @@ class SessionController extends GetxController {
       }
     }
   }
+
+  Future<bool> setProject(String pid) async =>
+      await runSession('op item get $pid --format json').then((Map raw) {
+        if (raw['e'] == 0) {
+          // set project
+          project.value = json.decode(raw['o']);
+
+          // return status
+          return true;
+        }
+        return false;
+      });
 }

@@ -189,6 +189,7 @@ class _ProjectsPageState extends State<ProjectsPage>
             color: Colors.grey[100],
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
             child: Stack(
+              alignment: AlignmentDirectional.center,
               children: [
                 Obx(
                   () => sc.projects.isNotEmpty
@@ -233,14 +234,38 @@ class EmptyProjects extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Column(
-      children: [
-        Padding(
-          padding: EdgeInsets.all(20.0),
-          child: Icon(Icons.folder, size: 80),
-        ),
-        Text('No Projects (Secret Notes) found!'),
-      ],
+    return Container(
+      padding: const EdgeInsets.all(50),
+      decoration: const BoxDecoration(
+        color: mainLightColor,
+        shape: BoxShape.circle,
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Icon(Icons.folder, size: 120, color: mainColor),
+          ),
+          Text(
+            'No Projects Found!',
+            style: defaultAppFont.copyWith(fontSize: 30),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 10.0, horizontal: 20),
+            child: SizedBox(
+              width: 250,
+              child: Text(
+                'Your 1Password account doesn\'t have any secret notes!',
+                style: defaultAppFont.copyWith(
+                  color: textSubColor,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -259,7 +284,7 @@ class _ProjectCardState extends State<ProjectCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Get.to(() => ProjectPage(projectId: widget.project['ID'])),
+      onTap: () => Get.to(() => ProjectPage(projectId: widget.project['id'])),
       child: MouseRegion(
         cursor: SystemMouseCursors.click,
         onEnter: (event) {
