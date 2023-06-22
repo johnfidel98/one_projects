@@ -52,9 +52,10 @@ class _ProjectsPageState extends State<ProjectsPage>
 
   @override
   Widget build(BuildContext context) {
+    double topbarHeight = 70;
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 70,
+        toolbarHeight: topbarHeight,
         backgroundColor: Colors.grey[100],
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -140,39 +141,52 @@ class _ProjectsPageState extends State<ProjectsPage>
             child: Column(
               children: [
                 loading
-                    ? const Expanded(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SizedBox(
-                              height: 300,
-                              width: 300,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 1,
-                              ),
+                    ? Stack(
+                        alignment: AlignmentDirectional.center,
+                        children: [
+                          SizedBox(
+                              height: MediaQuery.of(context).size.height -
+                                  topbarHeight,
+                              width: MediaQuery.of(context).size.width),
+                          const SizedBox(
+                            height: 300,
+                            width: 300,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 1,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       )
-                    : Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 8.0),
-                        child: Obx(
-                          () => sc.projects.isNotEmpty
-                              ? GridView.builder(
-                                  gridDelegate:
-                                      const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 4,
-                                  ),
-                                  shrinkWrap: true,
-                                  physics: const ClampingScrollPhysics(),
-                                  itemCount: sc.projects.length,
-                                  itemBuilder:
-                                      (BuildContext context, int index) =>
-                                          ProjectCard(
-                                    project: sc.projects[index],
-                                  ),
-                                )
-                              : const EmptyProjects(),
+                    : SingleChildScrollView(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                              vertical: 8.0, horizontal: 80),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                flex: 2,
+                                child: Container(),
+                              ),
+                              Expanded(
+                                flex: 3,
+                                child: Obx(
+                                  () => sc.projects.isNotEmpty
+                                      ? ListView.builder(
+                                          shrinkWrap: true,
+                                          physics:
+                                              const ClampingScrollPhysics(),
+                                          itemCount: sc.projects.length,
+                                          itemBuilder: (BuildContext context,
+                                                  int index) =>
+                                              ProjectCard(
+                                            project: sc.projects[index],
+                                          ),
+                                        )
+                                      : const EmptyProjects(),
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
               ],
@@ -246,11 +260,12 @@ class _ProjectCardState extends State<ProjectCard> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      const SizedBox(height: 30),
                       Text(
                         widget.project['TITLE'],
                         style: defaultAppFont.copyWith(fontSize: 25),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 15),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [

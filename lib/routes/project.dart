@@ -11,7 +11,20 @@ class ProjectPage extends StatefulWidget {
 
 class _ProjectPageState extends State<ProjectPage> {
   @override
+  void initState() {
+    super.initState();
+
+    // load project details
+  }
+
+  setProjectFolder(String path) {}
+
+  setProjectSecrets(String path) {}
+
+  @override
   Widget build(BuildContext context) {
-    return Container();
+    return Container(
+      color: Colors.red,
+    );
   }
 }

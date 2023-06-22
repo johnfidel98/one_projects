@@ -39,18 +39,25 @@ class SessionController extends GetxController {
     process.stdin.writeln(command);
 
     // wait for response
-    int c = 0;
+    int c = 0, sentCount = 0;
     while (commands.length != outputs.length) {
       await Future.delayed(const Duration(seconds: 1));
       c += 1;
 
       // repeat command after 50 sec
-      if (c > 50) {
+      if (c > 10) {
         // reset c
         c = 0;
 
+        if (sentCount > 3) {
+          // empty output... process success
+          Map output = {'o': "", 'e': 0};
+          outputs.add(output);
+        }
+
         // re-send command
         process.stdin.writeln(command);
+        sentCount += 1;
       }
     }
     return outputs.last;
