@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:one_projects/components/layout.dart';
+import 'package:one_projects/components/loading.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:one_projects/constants.dart';
 import 'package:one_projects/controllers.dart';
@@ -193,35 +194,18 @@ class _ProjectsPageState extends State<ProjectsPage>
               children: [
                 Obx(
                   () => sc.projects.isNotEmpty
-                      ? SingleChildScrollView(
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            physics: const ClampingScrollPhysics(),
-                            itemCount: sc.projects.length,
-                            itemBuilder: (BuildContext context, int index) =>
-                                ProjectCard(
-                              project: sc.projects[index],
-                            ),
+                      ? ListView.builder(
+                          shrinkWrap: true,
+                          physics: const ClampingScrollPhysics(),
+                          itemCount: sc.projects.length,
+                          itemBuilder: (BuildContext context, int index) =>
+                              ProjectCard(
+                            project: sc.projects[index],
                           ),
                         )
-                      : const EmptyProjects(),
+                      : EmptyProjects(loading: loading),
                 ),
-                if (loading)
-                  Stack(
-                    alignment: AlignmentDirectional.center,
-                    children: [
-                      SizedBox(
-                          height: MediaQuery.of(context).size.height,
-                          width: MediaQuery.of(context).size.width),
-                      const SizedBox(
-                        height: 300,
-                        width: 300,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 1,
-                        ),
-                      ),
-                    ],
-                  ),
+                if (loading) const GeneralLoading(),
               ],
             )),
       ),
@@ -230,7 +214,8 @@ class _ProjectsPageState extends State<ProjectsPage>
 }
 
 class EmptyProjects extends StatelessWidget {
-  const EmptyProjects({Key? key}) : super(key: key);
+  const EmptyProjects({Key? key, required this.loading}) : super(key: key);
+  final bool loading;
 
   @override
   Widget build(BuildContext context) {
@@ -248,7 +233,7 @@ class EmptyProjects extends StatelessWidget {
             child: Icon(Icons.folder, size: 120, color: mainColor),
           ),
           Text(
-            'No Projects Found!',
+            loading ? 'Loading Projects' : 'No Projects Found!',
             style: defaultAppFont.copyWith(fontSize: 30),
           ),
           Padding(
@@ -256,7 +241,9 @@ class EmptyProjects extends StatelessWidget {
             child: SizedBox(
               width: 250,
               child: Text(
-                'Your 1Password account doesn\'t have any secret notes!',
+                loading
+                    ? 'Kindly wait as we load your projects ...'
+                    : 'Your 1Password account doesn\'t have any secret notes!',
                 style: defaultAppFont.copyWith(
                   color: textSubColor,
                 ),

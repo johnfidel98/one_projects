@@ -7,7 +7,6 @@ class SessionController extends GetxController {
   RxMap oneSession = RxMap({'email': '', 'id': ''});
   RxList<Map> projects = RxList([]);
   RxList<String> processedProjectIds = RxList([]);
-  RxMap project = RxMap({});
 
   RxList procedures = RxList([]);
   RxList commands = RxList([]);
@@ -40,16 +39,20 @@ class SessionController extends GetxController {
 
     // wait for response
     int c = 0, sentCount = 0;
-    while (commands.length != outputs.length) {
+    if (commands.length < outputs.length) {
+      // remove output without command
+      outputs.removeLast();
+    }
+    while (commands.length > outputs.length) {
       await Future.delayed(const Duration(seconds: 1));
       c += 1;
 
       // repeat command after 50 sec
-      if (c > 5) {
+      if (c > 10) {
         // reset c
         c = 0;
 
-        if (sentCount > 3) {
+        if (sentCount >= 2) {
           // empty output... process success
           Map output = {'o': "", 'e': 0};
           outputs.add(output);
@@ -105,15 +108,12 @@ class SessionController extends GetxController {
     }
   }
 
-  Future<bool> setProject(String pid) async =>
+  Future<Map?> getProject(String pid) async =>
       await runSession('op item get $pid --format json').then((Map raw) {
         if (raw['e'] == 0) {
-          // set project
-          project.value = json.decode(raw['o']);
-
-          // return status
-          return true;
+          // return project
+          return json.decode(raw['o']);
         }
-        return false;
+        return null;
       });
 }
