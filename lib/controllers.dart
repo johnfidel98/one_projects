@@ -45,7 +45,7 @@ class SessionController extends GetxController {
       c += 1;
 
       // repeat command after 50 sec
-      if (c > 10) {
+      if (c > 5) {
         // reset c
         c = 0;
 
@@ -84,41 +84,22 @@ class SessionController extends GetxController {
 
   Future listProjects() async {
     // List items
-    Map raw = await runSession('op item list --categories "Secure Note"');
+    Map raw = await runSession(
+        'op item list --format json --categories "Secure Note"');
 
     if (raw['e'] == 0) {
-      Map fields = {};
-
-      bool readyTitles = false;
       // process projects map
-      for (String p in raw['o'].toString().trim().split('\n')) {
-        int ix = 0;
-        Map data = {};
-        // split by 2 or more spaces
-        for (String f in p.split(RegExp(r' {2,}'))) {
-          if (!readyTitles) {
-            // process titles
-            fields[ix] = f;
-          } else {
-            // process fields
-            data[fields[ix]] = f;
-          }
-
-          ix += 1;
-        }
-
-        readyTitles = true;
-
-        if (data.containsKey('ID')) {
-          if (!processedProjectIds.contains(data['ID'])) {
+      for (Map project in json.decode(raw['o'])) {
+        if (project.containsKey('id')) {
+          if (!processedProjectIds.contains(project['id'])) {
             // add to projects
-            projects.add(data);
-            processedProjectIds.add(data['ID']);
+            projects.add(project);
+            processedProjectIds.add(project['id']);
           } else {
             // replace existing ones
-            int ix = processedProjectIds.indexOf(data['ID']);
+            int ix = processedProjectIds.indexOf(project['id']);
             projects.removeAt(ix);
-            projects.insert(ix, data);
+            projects.insert(ix, project);
           }
         }
       }

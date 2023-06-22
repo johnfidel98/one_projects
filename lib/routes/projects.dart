@@ -3,6 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
+import 'package:one_projects/components/layout.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import 'package:one_projects/constants.dart';
 import 'package:one_projects/controllers.dart';
 import 'package:one_projects/routes/about.dart';
@@ -52,45 +54,89 @@ class _ProjectsPageState extends State<ProjectsPage>
 
   @override
   Widget build(BuildContext context) {
-    double topbarHeight = 70;
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: topbarHeight,
-        backgroundColor: Colors.grey[100],
-        title: Row(
+      body: LayoutSkel(
+        sideArea: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Row(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Image.asset('assets/images/icon.png', height: 40),
-                ),
-                Text(
-                  '1Projects',
-                  style: defaultAppFont.copyWith(
-                    fontSize: 30,
-                    color: mainColor,
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(15.0),
+                    child: Image.asset('assets/images/icon.png', height: 180),
                   ),
-                ),
-                TextButton(
-                    onPressed: () async {
-                      // refresh projects
-                      setState(() {
-                        refreshing = true;
-                      });
+                  Text(
+                    '1Projects',
+                    style: defaultAppFont.copyWith(
+                      fontSize: 40,
+                      color: contrastColor,
+                    ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 20.0),
+                    child: Divider(
+                      thickness: 0.5,
+                      height: 100,
+                      color: contrastColor,
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      TextButton(
+                        onPressed: () async {
+                          // refresh projects
+                          setState(() {
+                            refreshing = true;
+                          });
 
-                      await sc.listProjects();
+                          await sc.listProjects();
 
-                      setState(() {
-                        refreshing = false;
-                      });
-                    },
-                    child: Icon(
-                      refreshing ? Icons.more_horiz : Icons.sync,
-                      color: Colors.black87,
-                    )),
-              ],
+                          setState(() {
+                            refreshing = false;
+                          });
+                        },
+                        style: const ButtonStyle(
+                          side: MaterialStatePropertyAll(
+                            BorderSide(color: contrastColor, width: 0.5),
+                          ),
+                          padding: MaterialStatePropertyAll(
+                            EdgeInsets.symmetric(horizontal: 20, vertical: 30),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            refreshing
+                                ? const SizedBox(
+                                    height: 16,
+                                    width: 16,
+                                    child: CircularProgressIndicator(
+                                      color: contrastColor,
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.sync,
+                                    color: contrastColor,
+                                    size: 20,
+                                  ),
+                            SizedBox(width: refreshing ? 8 : 5),
+                            Text(
+                              'Reload Projects',
+                              style: defaultAppFont.copyWith(
+                                fontSize: 20,
+                                height: 1.1,
+                                color: contrastColor,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
             PopupMenuButton<String>(
               onSelected: handleSelected,
@@ -107,88 +153,74 @@ class _ProjectsPageState extends State<ProjectsPage>
                 ];
               },
               child: Obx(
-                () => Row(
-                  children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          sc.oneSession['email'],
-                          style: defaultAppFont.copyWith(color: Colors.black),
-                        ),
-                        Text(
-                          sc.oneSession['id'],
-                          style: defaultAppFont.copyWith(
-                              fontSize: 8, height: 2.0, color: Colors.black87),
-                        ),
-                      ],
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.only(left: 8.0),
-                      child: Icon(Icons.unfold_more, color: Colors.black),
-                    ),
-                  ],
+                () => Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 18.0, vertical: 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Text(
+                            sc.oneSession['email'],
+                            style:
+                                defaultAppFont.copyWith(color: contrastColor),
+                          ),
+                          Text(
+                            sc.oneSession['id'],
+                            style: defaultAppFont.copyWith(
+                                fontSize: 8, height: 2.0, color: contrastColor),
+                          ),
+                        ],
+                      ),
+                      const Padding(
+                        padding: EdgeInsets.only(left: 8.0),
+                        child: Icon(Icons.unfold_more, color: contrastColor),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
           ],
         ),
-      ),
-      body: SingleChildScrollView(
-        child: Container(
+        mainArea: Container(
             color: Colors.grey[100],
-            padding: const EdgeInsets.all(50),
-            child: Column(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+            child: Stack(
               children: [
-                loading
-                    ? Stack(
-                        alignment: AlignmentDirectional.center,
-                        children: [
-                          SizedBox(
-                              height: MediaQuery.of(context).size.height -
-                                  topbarHeight,
-                              width: MediaQuery.of(context).size.width),
-                          const SizedBox(
-                            height: 300,
-                            width: 300,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 1,
+                Obx(
+                  () => sc.projects.isNotEmpty
+                      ? SingleChildScrollView(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            physics: const ClampingScrollPhysics(),
+                            itemCount: sc.projects.length,
+                            itemBuilder: (BuildContext context, int index) =>
+                                ProjectCard(
+                              project: sc.projects[index],
                             ),
                           ),
-                        ],
-                      )
-                    : SingleChildScrollView(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(
-                              vertical: 8.0, horizontal: 80),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                flex: 2,
-                                child: Container(),
-                              ),
-                              Expanded(
-                                flex: 3,
-                                child: Obx(
-                                  () => sc.projects.isNotEmpty
-                                      ? ListView.builder(
-                                          shrinkWrap: true,
-                                          physics:
-                                              const ClampingScrollPhysics(),
-                                          itemCount: sc.projects.length,
-                                          itemBuilder: (BuildContext context,
-                                                  int index) =>
-                                              ProjectCard(
-                                            project: sc.projects[index],
-                                          ),
-                                        )
-                                      : const EmptyProjects(),
-                                ),
-                              ),
-                            ],
-                          ),
+                        )
+                      : const EmptyProjects(),
+                ),
+                if (loading)
+                  Stack(
+                    alignment: AlignmentDirectional.center,
+                    children: [
+                      SizedBox(
+                          height: MediaQuery.of(context).size.height,
+                          width: MediaQuery.of(context).size.width),
+                      const SizedBox(
+                        height: 300,
+                        width: 300,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 1,
                         ),
                       ),
+                    ],
+                  ),
               ],
             )),
       ),
@@ -249,12 +281,17 @@ class _ProjectCardState extends State<ProjectCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
+                  Row(
                     children: [
-                      Text(
-                        "ID: ${widget.project['ID']}",
-                        style: defaultAppFont.copyWith(fontSize: 10),
+                      Padding(
+                        padding: const EdgeInsets.only(right: 5.0),
+                        child: SvgPicture.asset(
+                          'assets/images/vault.svg',
+                          height: 18,
+                          width: 18,
+                        ),
                       ),
+                      Text(widget.project['vault']['name']),
                     ],
                   ),
                   Column(
@@ -262,7 +299,7 @@ class _ProjectCardState extends State<ProjectCard> {
                     children: [
                       const SizedBox(height: 30),
                       Text(
-                        widget.project['TITLE'],
+                        widget.project['title'],
                         style: defaultAppFont.copyWith(fontSize: 25),
                       ),
                       const SizedBox(height: 15),
@@ -271,18 +308,24 @@ class _ProjectCardState extends State<ProjectCard> {
                         children: [
                           Row(
                             children: [
-                              Padding(
-                                padding: const EdgeInsets.only(right: 5.0),
-                                child: SvgPicture.asset(
-                                  'assets/images/vault.svg',
-                                  height: 18,
-                                  width: 18,
-                                ),
+                              const Padding(
+                                padding: EdgeInsets.only(right: 3.0),
+                                child: Icon(Icons.update, size: 18),
                               ),
-                              Text(widget.project['VAULT']),
+                              Text(
+                                  'Version ${widget.project["version"].toString()}'),
                             ],
                           ),
-                          Text(widget.project['EDITED']),
+                          Row(
+                            children: [
+                              const Icon(Icons.schedule, size: 18),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 3.0),
+                                child: Text(timeago.format(DateTime.parse(
+                                    widget.project['updated_at']))),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ],
