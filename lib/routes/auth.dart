@@ -41,9 +41,17 @@ class _AuthPageState extends State<AuthPage> with WidgetsBindingObserver {
 
   Future authenticate() async =>
       // attempt signin
-      await sc.signIn().then((Map resp) {
+      await sc.signIn().then((Map resp) async {
         if (resp['e'] == 0) {
-          navProjects();
+          // re-check session and get current user credentials
+          await sc.checkSession().then((bool loggedIn) async {
+            if (loggedIn) {
+              navProjects();
+            } else {
+              // retry authenticate
+              await authenticate();
+            }
+          });
         }
 
         if (resp['o'].toString().contains('cannot connect')) {

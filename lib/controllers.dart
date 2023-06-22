@@ -65,14 +65,13 @@ class SessionController extends GetxController {
 
   Future<bool> checkSession() async =>
       // whoami: Get information about a signed-in account
-      await runSession('op whoami').then((Map response) {
+      await runSession('op whoami --format json').then((Map response) {
         // check command response
         if (response['e'] == 0) {
           // extract login details
-          List<String> fields = response['o'].toString().split('\n');
+          Map fields = json.decode(response['o']);
 
-          oneSession['email'] = fields[1].split(': ')[1].trim();
-          oneSession['id'] = fields[2].split(': ')[1].trim();
+          oneSession.value = fields;
           return true;
         }
         return false;

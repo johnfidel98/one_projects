@@ -168,7 +168,7 @@ class _ProjectsPageState extends State<ProjectsPage>
                                 defaultAppFont.copyWith(color: contrastColor),
                           ),
                           Text(
-                            sc.oneSession['id'],
+                            sc.oneSession['user_uuid'],
                             style: defaultAppFont.copyWith(
                                 fontSize: 8, height: 2.0, color: contrastColor),
                           ),
