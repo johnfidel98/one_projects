@@ -1,7 +1,7 @@
 name: one_projects
 description: Map and sync your 1 password projects respectively.
 publish_to: 'none'
-version: 0.1.0
+version: 1.0.0
 
 environment:
   sdk: '>=3.0.2 <4.0.0'
