@@ -5,6 +5,8 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'dart:io';
+import 'package:path/path.dart' as path;
 import 'package:file_picker/file_picker.dart';
 import 'package:one_projects/components/loading.dart';
 import 'package:one_projects/constants.dart';
@@ -268,7 +270,7 @@ class ProjectContent extends StatelessWidget {
                             ),
                           ),
                           Text(location.isNotEmpty
-                              ? 'Install selected secrets on set location [ $location ].'
+                              ? 'Install selected secrets on set location [ $location ] into a .env file. If the file already exists, it will be updated!'
                               : 'Kindly set location to install the secrets below ...'),
                         ],
                       ),
@@ -285,7 +287,10 @@ class ProjectContent extends StatelessWidget {
                     physics: const ClampingScrollPhysics(),
                     itemCount: secrets.length,
                     itemBuilder: (BuildContext context, int index) =>
-                        ProjectSecret(data: secrets[index]),
+                        ProjectSecret(
+                      data: secrets[index],
+                      installLocation: location,
+                    ),
                   ),
                 ),
             ],
@@ -296,58 +301,139 @@ class ProjectContent extends StatelessWidget {
   }
 }
 
-class ProjectSecret extends StatelessWidget {
+class ProjectSecret extends StatefulWidget {
   const ProjectSecret({
     super.key,
     required this.data,
+    required this.installLocation,
   });
 
   final Map data;
+  final String installLocation;
+
+  @override
+  State<ProjectSecret> createState() => _ProjectSecretState();
+}
+
+class _ProjectSecretState extends State<ProjectSecret> {
+  final SessionController sc = Get.find<SessionController>();
+  bool updatingSecret = false;
+
+  Future<void> createFileInDirectory(String content) async {
+    // Get the application directory
+    Directory directory = Directory(widget.installLocation);
+
+    // Define the file name and path
+    String filePath = path.join(directory.path, '.env.1projects');
+
+    // Create the file
+    File file = File(filePath);
+    await file.create();
+
+    // write content to the file
+    String fileContent = content;
+    await file.writeAsString(fileContent);
+  }
+
+  void updateSecret() async {
+    setState(() {
+      updatingSecret = true;
+    });
+
+    // get secret details
+    Map? item = await sc
+        .runSession("op item get ${widget.data['value']} --format json")
+        .then((Map raw) {
+      if (raw['e'] == 0) {
+        // return project
+        return json.decode(raw['o']) ?? {};
+      }
+      return null;
+    });
+
+    if (item != null) {
+      // extract item fields
+      String content = '';
+      for (Map f in item['fields']) {
+        if (f.containsKey('value') && f['purpose'] != 'NOTES') {
+          content +=
+              '${item["category"]}_${f["label"].toString().toUpperCase()}=${f["value"]}\n';
+        }
+      }
+      // update .env file
+      await createFileInDirectory(content);
+    } else {
+      // notify user
+      Get.defaultDialog(
+        title: 'Missing Item',
+        content: Padding(
+          padding: const EdgeInsets.all(30.0),
+          child: Text(
+              'Couldn\'t find the referenced item "${widget.data["label"]}" in your 1Password vault!'),
+        ),
+      );
+    }
+    setState(() {
+      updatingSecret = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 300,
-      decoration: BoxDecoration(
-        border: Border.all(width: 0.5, color: mainColor),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(10.0),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.password),
-                Padding(
-                  padding: const EdgeInsets.only(left: 8.0),
-                  child: SizedBox(
-                    width: 180,
-                    child: Text(
-                      data['label'],
-                      style: defaultAppFont.copyWith(),
-                      overflow: TextOverflow.ellipsis,
+    return Padding(
+      padding: const EdgeInsets.only(right: 10.0),
+      child: Container(
+        width: 300,
+        decoration: BoxDecoration(
+          border: Border.all(width: 0.5, color: mainColor),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.password),
+                  Padding(
+                    padding: const EdgeInsets.only(left: 8.0),
+                    child: SizedBox(
+                      width: 190,
+                      child: Text(
+                        widget.data['label'],
+                        style: defaultAppFont.copyWith(),
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-            Material(
-              child: TextButton(
-                onPressed: () {},
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.vertical_align_bottom),
-                    Text(
-                      'Install',
-                      style: defaultAppFont.copyWith(fontSize: 10),
-                    )
-                  ],
-                ),
+                ],
               ),
-            ),
-          ],
+              updatingSecret
+                  ? const Padding(
+                      padding: EdgeInsets.only(right: 20.0),
+                      child: SizedBox(
+                        height: 20,
+                        width: 20,
+                        child: CircularProgressIndicator(),
+                      ),
+                    )
+                  : Material(
+                      child: TextButton(
+                        onPressed: updateSecret,
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.vertical_align_bottom),
+                            Text(
+                              'Install',
+                              style: defaultAppFont.copyWith(fontSize: 10),
+                            )
+                          ],
+                        ),
+                      ),
+                    ),
+            ],
+          ),
         ),
       ),
     );
