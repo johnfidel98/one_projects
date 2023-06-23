@@ -1,8 +1,11 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_svg/svg.dart';
 import 'package:get/get.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:file_picker/file_picker.dart';
 import 'package:one_projects/components/loading.dart';
 import 'package:one_projects/constants.dart';
 import 'package:one_projects/controllers.dart';
@@ -19,6 +22,7 @@ class ProjectPage extends StatefulWidget {
 class _ProjectPageState extends State<ProjectPage> with WidgetsBindingObserver {
   final SessionController sc = Get.find<SessionController>();
   Map project = {};
+  bool settingDir = false;
 
   @override
   void initState() {
@@ -27,14 +31,44 @@ class _ProjectPageState extends State<ProjectPage> with WidgetsBindingObserver {
     // load project details
     sc.getProject(widget.projectId!);
     WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => sc
-        .getProject(widget.projectId!)
-        .then((Map? prj) => setState(() => project = prj ?? {})));
+    WidgetsBinding.instance.addPostFrameCallback(refreshProject);
   }
 
-  setProjectFolder(String path) {}
+  refreshProject(_) async => await sc
+      .getProject(widget.projectId!)
+      .then((Map? prj) => setState(() => project = prj ?? {}));
 
   setProjectSecrets(String path) {}
+
+  void pickDirectoryPath() async {
+    // get selected dir
+    String? pickedDir = await FilePicker.platform.getDirectoryPath();
+
+    if (pickedDir != null) {
+      setState(() {
+        settingDir = true;
+      });
+      // update directory path
+      Map? updatedProject = await sc
+          .runSession(
+              "op item edit ${widget.projectId} 'location[text]=$pickedDir' --format json")
+          .then((Map raw) {
+        if (raw['e'] == 0) {
+          // return project
+          return json.decode(raw['o']) ?? {};
+        }
+        return null;
+      });
+
+      // update state
+      setState(() {
+        settingDir = false;
+        if (updatedProject != null) {
+          project = updatedProject;
+        }
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -74,7 +108,11 @@ class _ProjectPageState extends State<ProjectPage> with WidgetsBindingObserver {
           ),
           Expanded(
             child: project.containsKey('id')
-                ? ProjectContent(project: project)
+                ? ProjectContent(
+                    project: project,
+                    pathPicker: pickDirectoryPath,
+                    settingDir: settingDir,
+                  )
                 : const GeneralLoading(),
           ),
         ],
@@ -87,9 +125,13 @@ class ProjectContent extends StatelessWidget {
   const ProjectContent({
     super.key,
     required this.project,
+    required this.pathPicker,
+    required this.settingDir,
   });
 
   final Map project;
+  final Function() pathPicker;
+  final bool settingDir;
 
   @override
   Widget build(BuildContext context) {
@@ -101,7 +143,7 @@ class ProjectContent extends StatelessWidget {
         if (field.containsKey('value')) {
           description = field['value'];
         }
-      } else if (field['label'] == 'text') {
+      } else if (field['label'] == 'location') {
         // extract folder location
         location = field['value'];
       } else if (field['type'] == 'REFERENCE') {
@@ -172,24 +214,29 @@ class ProjectContent extends StatelessWidget {
               ),
               MouseRegion(
                 cursor: SystemMouseCursors.click,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 15),
-                  decoration: BoxDecoration(
-                    color: mainLightColor,
-                    border: Border.all(width: 0.5, color: mainColor),
-                  ),
-                  child: Text(
-                    location.isNotEmpty
-                        ? location
-                        : 'Click To Set Location ...',
-                    style: defaultAppFont.copyWith(
-                      fontStyle: location.isNotEmpty
-                          ? FontStyle.normal
-                          : FontStyle.italic,
-                      color: location.isNotEmpty ? null : Colors.black,
-                      letterSpacing: 1.5,
-                      fontSize: 14,
+                child: GestureDetector(
+                  onTap: pathPicker,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 15),
+                    decoration: BoxDecoration(
+                      color: mainLightColor,
+                      border: Border.all(width: 0.5, color: mainColor),
+                    ),
+                    child: Text(
+                      settingDir
+                          ? 'Updating Location ...'
+                          : location.isNotEmpty
+                              ? location
+                              : 'Click To Set Location ...',
+                      style: defaultAppFont.copyWith(
+                        fontStyle: location.isNotEmpty
+                            ? FontStyle.normal
+                            : FontStyle.italic,
+                        color: location.isNotEmpty ? null : Colors.black,
+                        letterSpacing: 1.5,
+                        fontSize: 14,
+                      ),
                     ),
                   ),
                 ),
