@@ -326,13 +326,24 @@ class _ProjectSecretState extends State<ProjectSecret> {
     // Define the file name and path
     String filePath = path.join(directory.path, '.env.1projects');
 
-    // Create the file
     File file = File(filePath);
-    await file.create();
 
-    // write content to the file
-    String fileContent = content;
-    await file.writeAsString(fileContent);
+    try {
+      // Read the existing file content
+      String existingContent = await file.readAsString();
+
+      // Modify the content (e.g., append or replace)
+      String updatedContent = '$existingContent\n$content';
+
+      // Write the updated content back to the file
+      await file.writeAsString(updatedContent);
+    } catch (e) {
+      // Create the file
+      await file.create();
+
+      // write content to the file
+      await file.writeAsString(content);
+    }
   }
 
   void updateSecret() async {
@@ -357,7 +368,7 @@ class _ProjectSecretState extends State<ProjectSecret> {
       for (Map f in item['fields']) {
         if (f.containsKey('value') && f['purpose'] != 'NOTES') {
           content +=
-              '${item["category"]}_${f["label"].toString().toUpperCase()}=${f["value"]}\n';
+              '${item["category"]}_${f["label"].toString().toUpperCase().replaceAll(' ', '_')}=${f["value"]}\n';
         }
       }
       // update .env file
